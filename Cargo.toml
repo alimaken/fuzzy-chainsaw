@@ -1,7 +1,15 @@
 [package]
 name = "fuzzy-chainsaw"
 version = "0.1.0"
-authors = ["Ali Maken <ali_maken@epam.com>"]
+authors = ["Ali Maken <ali.maken@yahoo.com>"]
 edition = "2018"
 
 [dependencies]
+cursive = "*"
+reqwest = "*"
+serde_json = "*"
+url = "*"
+log = "*"
+env_logger = "*"
+# cursive_table_view = "0.9"
+rand = "0.6"
