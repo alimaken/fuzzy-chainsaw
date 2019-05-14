@@ -38,21 +38,38 @@ fn main() {
     // Initial setup
     let mut main = Cursive::default();
 
-    let mut table = TableView::<Foo, BasicColumn>::new()
-        .column(BasicColumn::Name, "Name", |c| c.width_percent(20))
-        .column(BasicColumn::Count, "Count", |c| c.align(HAlign::Center))
-        .column(BasicColumn::Rate, "Rate", |c| {
+    let mut table = TableView::<Framework, BasicColumn>::new()
+        .column(BasicColumn::Framework, "Frameworks", |c| c.width_percent(60))
+        .column(BasicColumn::Mem, "Mem", |c| c.align(HAlign::Center))
+        .column(BasicColumn::CPUs, "CPUs", |c| {
             c.ordering(Ordering::Greater)
                 .align(HAlign::Right)
                 .width_percent(20)
         });
 
+    let url = query_url_gen("Frameworks");
+    let mut link_vec: Vec<String> = vec![];
+
+    let mut res = reqwest::get(url).unwrap();
+    info!("URL is [{:?}]", res);
+    let v: Value = res.json().expect("Failed to parse json");
+
+    match get_links(&v) {
+        Ok(x) => link_vec = x,
+        Err(e) => pop_error(&mut main, &handler(&e)),
+    };
+
+
     let mut items = Vec::new();
-    for i in 0..50 {
-        items.push(Foo {
-            name: format!("Name {}", i),
-            count: rng.gen_range(0, 255),
-            rate: rng.gen_range(0, 255),
+    for item in link_vec {
+        items.push(Framework {
+            framework: format!("{}", item),
+            mem: rng.gen_range(0, 255),
+            cpus: rng.gen_range(0, 255),
+            uptime: rng.gen_range(0, 255),
+            upsince: rng.gen_range(0, 255),
+            tasks: rng.gen_range(0, 255),
+            tasksmap: rng.gen_range(0, 255),
         });
     }
 
@@ -70,7 +87,7 @@ fn main() {
 
     table.set_on_submit(|siv: &mut Cursive, row: usize, index: usize| {
         let value = siv
-            .call_on_id("table", move |table: &mut TableView<Foo, BasicColumn>| {
+            .call_on_id("table", move |table: &mut TableView<Framework, BasicColumn>| {
                 format!("{:?}", table.borrow_item(index).unwrap())
             })
             .unwrap();
@@ -79,7 +96,7 @@ fn main() {
             Dialog::around(TextView::new(value))
                 .title(format!("Removing row # {}", row))
                 .button("Close", move |s| {
-                    s.call_on_id("table", |table: &mut TableView<Foo, BasicColumn>| {
+                    s.call_on_id("table", |table: &mut TableView<Framework, BasicColumn>| {
                         table.remove_item(index);
                     });
                     s.pop_layer();
@@ -87,7 +104,7 @@ fn main() {
         );
     });
 
-    main.add_layer(Dialog::around(table.with_id("table").min_size((50, 20))).title("Table View"));
+    main.add_layer(Dialog::around(table.with_id("table").min_size((500, 200))).title("Fuzzy-Chainsaw"));
 
 
     // Set theme
@@ -116,7 +133,6 @@ fn search(s: &mut Cursive) {
 
 fn on_submit_fn(s: &mut Cursive, name: &str) {
     let url = query_url_gen(name);
-    // let mut extract = String::new();
     let mut link_vec: Vec<String> = vec![];
 
     let mut res = reqwest::get(url).unwrap();
@@ -198,34 +214,50 @@ pub fn query_url_gen(title: &str) -> Url {
 // ################### TABLE #########################
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum BasicColumn {
-    Name,
-    Count,
-    Rate,
+    Framework,
+    Mem,
+    CPUs,
+    UpTime,
+    UpSince,
+    Tasks,
+    TaksMap,
 }
 
 impl BasicColumn {
     fn as_str(&self) -> &str {
         match *self {
-            BasicColumn::Name => "Name",
-            BasicColumn::Count => "Count",
-            BasicColumn::Rate => "Rate",
+            BasicColumn::Framework => "Frameworks",
+            BasicColumn::Mem => "Mem",
+            BasicColumn::CPUs => "CPUs",
+            BasicColumn::UpTime => "UpTime",
+            BasicColumn::UpSince => "Up Since",
+            BasicColumn::Tasks => "Tasks",
+            BasicColumn::TaksMap => "Tasks Map",
         }
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct Foo {
-    name: String,
-    count: usize,
-    rate: usize,
+pub struct Framework {
+    framework: String,
+    mem: usize,
+    cpus: usize,
+    uptime: usize,
+    upsince: usize,
+    tasks: usize,
+    tasksmap: usize,
 }
 
-impl TableViewItem<BasicColumn> for Foo {
+impl TableViewItem<BasicColumn> for Framework {
     fn to_column(&self, column: BasicColumn) -> String {
         match column {
-            BasicColumn::Name => self.name.to_string(),
-            BasicColumn::Count => format!("{}", self.count),
-            BasicColumn::Rate => format!("{}", self.rate),
+            BasicColumn::Framework => self.framework.to_string(),
+            BasicColumn::Mem => format!("{}", self.mem),
+            BasicColumn::CPUs => format!("{}", self.cpus),
+            BasicColumn::UpTime => format!("{}", self.uptime),
+            BasicColumn::UpSince => format!("{}", self.upsince),
+            BasicColumn::Tasks => format!("{}", self.tasks),
+            BasicColumn::TaksMap => format!("{}", self.tasksmap),
         }
     }
 
@@ -234,9 +266,13 @@ impl TableViewItem<BasicColumn> for Foo {
         Self: Sized,
     {
         match column {
-            BasicColumn::Name => self.name.cmp(&other.name),
-            BasicColumn::Count => self.count.cmp(&other.count),
-            BasicColumn::Rate => self.rate.cmp(&other.rate),
+            BasicColumn::Framework => self.framework.cmp(&other.framework),
+            BasicColumn::Mem => self.mem.cmp(&other.mem),
+            BasicColumn::CPUs => self.cpus.cmp(&other.cpus),
+            BasicColumn::UpTime => self.cpus.cmp(&other.uptime),
+            BasicColumn::UpSince => self.cpus.cmp(&other.upsince),
+            BasicColumn::Tasks => self.cpus.cmp(&other.tasks),
+            BasicColumn::TaksMap => self.cpus.cmp(&other.tasksmap),
         }
     }
 }
