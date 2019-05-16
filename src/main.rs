@@ -39,18 +39,18 @@ fn main() {
     let mut main = Cursive::default();
 
     let mut table = TableView::<Framework, BasicColumn>::new()
-        .column(BasicColumn::Name, "Framework" , |c| c /*, |c| c.width_percent(40)*/)
-        .column(BasicColumn::Mem, "Mem", |c| c.align(HAlign::Right).width_percent(5))
+        .column(BasicColumn::Name, "Framework" , |c| c.width_percent(40))
+        .column(BasicColumn::Mem, "Mem", |c| c.align(HAlign::Right))
         .column(BasicColumn::CPUs, "CPUs", |c| {
             c.ordering(Ordering::Greater)
                 .align(HAlign::Right)
-                .width_percent(5)
+                
         })
-        .column(BasicColumn::UpTime, "UpTime", |c| c.align(HAlign::Right).width_percent(5))
-        .column(BasicColumn::UpSince, "UpSince", |c| c.align(HAlign::Right).width_percent(5))
-        .column(BasicColumn::Tasks, "Tasks", |c| c.align(HAlign::Right).width_percent(5))
-        .column(BasicColumn::TaksMap, "TaksMap", |c| c.align(HAlign::Right).width_percent(5))
-        .column(BasicColumn::URL, "URL", |c| c.align(HAlign::Right).width_percent(5))
+        .column(BasicColumn::UpTime, "UpTime", |c| c.align(HAlign::Right))
+        .column(BasicColumn::UpSince, "UpSince", |c| c.align(HAlign::Right))
+        .column(BasicColumn::Tasks, "Tasks", |c| c.align(HAlign::Right))
+        .column(BasicColumn::TaksMap, "TaksMap", |c| c.align(HAlign::Right))
+        .column(BasicColumn::URL, "URL", |c| c.align(HAlign::Right))
 
         ;
 
@@ -140,16 +140,20 @@ pub fn get_links(v: &Value) -> Result<Vec<Framework>, reqwest::Error> {
                 match item["resources"] {
                     Value::Object(ref resources) => {
                         match resources["mem"] {
-                            Value::String(ref mem) => f.mem = mem.to_string().parse().unwrap(),
-                        _ => (),
-                        }
+                            Value::Number(ref mem) => f.mem = mem.as_f64().unwrap_or(0.0) as i32,
+                            _ => (),
+                        };
                     },
-                    _ => (),
-                    
+                    _ => (),                    
                 }
-                match item["resources"]["cpus"] {
-                    Value::String(ref cpus) => f.cpus = cpus.to_string().parse().unwrap(),
-                    _ => (),
+                match item["resources"] {
+                    Value::Object(ref resources) => {
+                        match resources["cpus"] {
+                            Value::Number(ref cpus) => f.cpus = cpus.as_f64().unwrap_or(0.0) as i32,
+                            _ => (),
+                        };
+                    },
+                    _ => (),                    
                 }
                 match item["registered_time"] {
                     Value::String(ref uptime_epoch) => {
